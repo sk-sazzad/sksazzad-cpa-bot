@@ -268,70 +268,226 @@
 
 <div class="container">
 
-    <!-- PREMIUM HEADER -->
-
-    <div class="top-header">
-
-        <div class="brand-logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="SK CPA Logo">
-
-            <div class="brand-text">
-                <h1>SK CPA Command Center</h1>
-                <p>Luxury Affiliate Dashboard</p>
-            </div>
-        </div>
-
-        <button onclick="loadStats()" class="refresh-btn">
-            🔄 Refresh
-        </button>
-
-    </div>
-
-    <div class="subtitle">
-        Live Affiliate Dashboard
-    </div>
+    <h1>💎 SK CPA Command Center</h1>
+    <div class="subtitle">Live Affiliate Dashboard</div>
 
     <div class="topbar">
         <span id="last-updated">Fetching...</span>
+        <button id="refresh-btn" onclick="loadStats()">🔄 Refresh</button>
     </div>
 
     <div id="error-banner"></div>
 
     <!-- SUMMARY CARDS -->
-
     <div class="cards">
-        <div class="card">
-            <h3>💰 Total Revenue</h3>
-            <h2 id="c-revenue">—</h2>
-        </div>
+        <div class="card"><h3>💰 Total Revenue</h3>    <h2 id="c-revenue">—</h2></div>
+        <div class="card"><h3>📊 Total Leads</h3>      <h2 id="c-leads">—</h2></div>
+        <div class="card"><h3>✅ Approved Leads</h3>   <h2 id="c-approved">—</h2></div>
+        <div class="card"><h3>⏳ Pending Leads</h3>    <h2 id="c-pending">—</h2></div>
+        <div class="card"><h3>🌐 Best Network</h3>     <h2 id="c-network">—</h2></div>
+        <div class="card"><h3>🌍 Top GEO</h3>          <h2 id="c-geo">—</h2></div>
+    </div>
 
-        <div class="card">
-            <h3>📊 Total Leads</h3>
-            <h2 id="c-leads">—</h2>
+    <!-- CHARTS -->
+    <div class="charts">
+        <div class="chart-box">
+            <h2>📈 7-Day Revenue Trend</h2>
+            <div style="position:relative;height:240px;">
+                <canvas id="revenueChart" role="img" aria-label="7 day revenue trend line chart"></canvas>
+            </div>
         </div>
+        <div class="chart-box">
+            <h2>🌐 Revenue by Network</h2>
+            <div style="position:relative;height:240px;">
+                <canvas id="networkChart" role="img" aria-label="Revenue by network bar chart"></canvas>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h2>🌍 Top GEOs</h2>
+            <div style="position:relative;height:240px;">
+                <canvas id="geoChart" role="img" aria-label="Revenue by GEO pie chart"></canvas>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h2>✅ Lead Status</h2>
+            <div style="position:relative;height:240px;">
+                <canvas id="statusChart" role="img" aria-label="Lead status doughnut chart"></canvas>
+            </div>
+        </div>
+    </div>
 
-        <div class="card">
-            <h3>✅ Approved Leads</h3>
-            <h2 id="c-approved">—</h2>
-        </div>
-
-        <div class="card">
-            <h3>⏳ Pending Leads</h3>
-            <h2 id="c-pending">—</h2>
-        </div>
-
-        <div class="card">
-            <h3>🌐 Best Network</h3>
-            <h2 id="c-network">—</h2>
-        </div>
-
-        <div class="card">
-            <h3>🌍 Top GEO</h3>
-            <h2 id="c-geo">—</h2>
-        </div>
+    <!-- RECENT LEADS TABLE -->
+    <div class="table-box">
+        <h2>📋 Recent Leads</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Network</th>
+                    <th>Campaign</th>
+                    <th>Payout</th>
+                    <th>Status</th>
+                    <th>Country</th>
+                    <th>SubID</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="leads-body">
+                <tr><td colspan="7" style="color:#64748b;text-align:center;">Loading...</td></tr>
+            </tbody>
+        </table>
     </div>
 
 </div>
 
+<script>
+let charts = {};
+
+function destroyChart(id) {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function statusBadge(s) {
+    const norm = (s || "").toLowerCase();
+    if (norm === "approved" || norm === "1")
+        return `<span class="status-badge status-approved">Approved</span>`;
+    if (norm === "rejected")
+        return `<span class="status-badge status-rejected">Rejected</span>`;
+    return `<span class="status-badge status-pending">Pending</span>`;
+}
+
+function fmtDate(iso) {
+    if (!iso || iso === "N/A") return "—";
+    try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+async function loadStats() {
+    document.getElementById("refresh-btn").textContent = "⏳ Loading...";
+    document.getElementById("error-banner").style.display = "none";
+
+    try {
+        const res = await fetch("/api/stats");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json();
+
+        // Cards
+        document.getElementById("c-revenue").textContent  = `$${d.summary.revenue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        document.getElementById("c-leads").textContent    = d.summary.total_leads;
+        document.getElementById("c-approved").textContent = d.summary.approved;
+        document.getElementById("c-pending").textContent  = d.summary.pending;
+        document.getElementById("c-network").textContent  = d.summary.best_network;
+        document.getElementById("c-geo").textContent      = d.summary.top_geo;
+
+        // Revenue Trend
+        destroyChart("revenueChart");
+        charts.revenueChart = new Chart(document.getElementById("revenueChart"), {
+            type: "line",
+            data: {
+                labels: d.trend.labels,
+                datasets: [{
+                    label: "Revenue ($)",
+                    data: d.trend.data,
+                    borderColor: "#22c55e",
+                    backgroundColor: "rgba(34,197,94,0.12)",
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: "#94a3b8" } } },
+                scales: {
+                    x: { ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
+                    y: { ticks: { color: "#94a3b8", callback: v => "$"+v }, grid: { color: "#334155" } }
+                }
+            }
+        });
+
+        // Network Revenue
+        destroyChart("networkChart");
+        charts.networkChart = new Chart(document.getElementById("networkChart"), {
+            type: "bar",
+            data: {
+                labels: d.networks.labels,
+                datasets: [{
+                    label: "Revenue ($)",
+                    data: d.networks.data,
+                    backgroundColor: "#3b82f6"
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: "#94a3b8" } } },
+                scales: {
+                    x: { ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
+                    y: { ticks: { color: "#94a3b8", callback: v => "$"+v }, grid: { color: "#334155" } }
+                }
+            }
+        });
+
+        // GEO Pie
+        destroyChart("geoChart");
+        charts.geoChart = new Chart(document.getElementById("geoChart"), {
+            type: "pie",
+            data: {
+                labels: d.geos.labels,
+                datasets: [{ data: d.geos.data,
+                    backgroundColor: ["#3b82f6","#22c55e","#f59e0b","#ef4444","#a855f7"] }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: "#94a3b8" } } }
+            }
+        });
+
+        // Status Doughnut
+        destroyChart("statusChart");
+        charts.statusChart = new Chart(document.getElementById("statusChart"), {
+            type: "doughnut",
+            data: {
+                labels: d.status.labels,
+                datasets: [{ data: d.status.data,
+                    backgroundColor: ["#22c55e","#f59e0b","#ef4444"] }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: "#94a3b8" } } }
+            }
+        });
+
+        // Recent leads table
+        const tbody = document.getElementById("leads-body");
+        if (d.recent.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:#64748b;text-align:center;">No leads yet</td></tr>`;
+        } else {
+            tbody.innerHTML = d.recent.map(r => `
+                <tr>
+                    <td>${r.network  || "—"}</td>
+                    <td>${r.campaign || "—"}</td>
+                    <td>$${parseFloat(r.payout||0).toFixed(2)}</td>
+                    <td>${statusBadge(r.status)}</td>
+                    <td>${r.country  || "—"}</td>
+                    <td>${r.subid    || "—"}</td>
+                    <td>${fmtDate(r.created_at)}</td>
+                </tr>`).join("");
+        }
+
+        document.getElementById("last-updated").textContent =
+            "Last updated: " + new Date().toLocaleTimeString();
+
+    } catch (err) {
+        const banner = document.getElementById("error-banner");
+        banner.style.display = "block";
+        banner.textContent = "⚠ Could not load data: " + err.message;
+    }
+
+    document.getElementById("refresh-btn").textContent = "🔄 Refresh";
+    document.getElementById("loading").classList.add("hidden");
+}
+
+// Load on page open, then auto-refresh every 60 seconds
+loadStats();
+setInterval(loadStats, 60000);
+</script>
 </body>
 </html>
