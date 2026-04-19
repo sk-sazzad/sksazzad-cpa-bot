@@ -1,28 +1,30 @@
 # =========================================
 # SK CPA COMMAND CENTER - FINAL PRODUCTION
-# Full Final app.py
+# Secure Environment Variables Version
 # =========================================
 
 from flask import Flask, request, render_template
 import requests
 import json
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
 # =====================================
-# TELEGRAM CONFIG
+# TELEGRAM CONFIG (SECURE VERSION)
 # =====================================
 
-BOT_TOKEN = "8647704351:AAGR533RLt8K1UTDZEHNlRGX0Qr9PXzmKIo"
-CHAT_ID = "5451893008"
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
 
 # =====================================
-# SUPABASE CONFIG
+# SUPABASE CONFIG (SECURE VERSION)
 # =====================================
 
-SUPABASE_URL = "https://kpujijdgrtxkuvhljvrd.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwdWppamRncnR4a3V2aGxqdnJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODQ4NDcsImV4cCI6MjA5MjE2MDg0N30.Ty-sRPph3RA-0EsIAZ_Fbg6FgkaDTVbwKztpRg4dp9s"
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
 SUPABASE_TABLE_URL = f"{SUPABASE_URL}/rest/v1/leads"
 
 # =====================================
@@ -41,6 +43,22 @@ def send_message(chat_id, text, reply_markup=None):
         payload["reply_markup"] = json.dumps(reply_markup)
 
     requests.post(url, data=payload)
+
+# =====================================
+# SECURITY CHECK (OPTIONAL BUT RECOMMENDED)
+# =====================================
+
+if not BOT_TOKEN:
+    print("ERROR: BOT_TOKEN not found")
+
+if not CHAT_ID:
+    print("ERROR: CHAT_ID not found")
+
+if not SUPABASE_URL:
+    print("ERROR: SUPABASE_URL not found")
+
+if not SUPABASE_KEY:
+    print("ERROR: SUPABASE_KEY not found")
 
 
 # =====================================
