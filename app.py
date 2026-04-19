@@ -41,18 +41,21 @@ def postback():
 
     # Telegram Message
     message = f"""
-🔥 New Lead Received
+🚀 New CPA Lead Received
 
-Network: {network}
-Campaign: {campaign}
-Offer ID: {offer_id}
-Payout: ${payout}
-Status: {status}
+🌐 Network: {network}
+🎯 Campaign: {campaign}
+🆔 Offer ID: {offer_id}
+💰 Payout: ${payout}
+📌 Status: {status}
 
-SubID: {subid}
-Country: {country}
-IP: {ip}
-Time: {conversion_time}
+👤 SubID: {subid}
+🌍 Country: {country}
+📍 IP: {ip}
+⏰ Time: {conversion_time}
+
+━━━━━━━━━━━━━━━
+💎 SK CPA Command Center
 """
 
     telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
