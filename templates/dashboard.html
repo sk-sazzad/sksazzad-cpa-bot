@@ -268,12 +268,29 @@
 
 <div class="container">
 
-    <h1>💎 SK CPA Command Center</h1>
-    <div class="subtitle">Live Affiliate Dashboard</div>
+    <div class="top-header">
+
+    <div class="brand-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="SK CPA Logo">
+
+        <div class="brand-text">
+            <h1>SK CPA Command Center</h1>
+            <p>Luxury Affiliate Dashboard</p>
+        </div>
+    </div>
+
+    <button onclick="loadStats()" class="refresh-btn">
+        🔄 Refresh
+    </button>
+
+</div>
+
+<div class="subtitle">
+    Live Affiliate Dashboard
+</div>
 
     <div class="topbar">
         <span id="last-updated">Fetching...</span>
-        <button id="refresh-btn" onclick="loadStats()">🔄 Refresh</button>
     </div>
 
     <div id="error-banner"></div>
