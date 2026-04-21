@@ -485,7 +485,7 @@ if status.lower() in ("approved", "1"):
 💎 SK CPA Command Center"""
 
     # High Value Lead Alert
-    if payout >= 5:
+    if payout >= 4:
         message = "🔥 HIGH VALUE LEAD ALERT 🔥\n\n" + message
 
     send_message(CHAT_ID, message)
