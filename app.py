@@ -465,9 +465,10 @@ def postback():
     except ValueError:
         payout = 0.0
 
-    # --- Telegram alert (approved only) ---
-    if status.lower() in ("approved", "1"):
-        send_message(CHAT_ID, f"""🚀 New CPA Lead Received
+# --- Telegram alert (approved only) ---
+if status.lower() in ("approved", "1"):
+
+    message = f"""🚀 {network} New Lead Received
 
 🌐 Network: {network}
 🎯 Campaign: {campaign}
@@ -475,13 +476,19 @@ def postback():
 💰 Payout: ${payout:.2f}
 📌 Status: Approved
 
-👤 SubID: {subid}
+👤 Lead Holder: {subid}
 🌍 Country: {country}
 📍 IP: {ip}
 ⏰ Time: {conversion_time}
 
 ━━━━━━━━━━━━━━━
-💎 SK CPA Command Center""")
+💎 SK CPA Command Center"""
+
+    # High Value Lead Alert
+    if payout >= 5:
+        message = "🔥 HIGH VALUE LEAD ALERT 🔥\n\n" + message
+
+    send_message(CHAT_ID, message)
 
     # --- Save to Supabase ---
     sb_insert({
