@@ -445,30 +445,29 @@ def postback():
         if request.values.get("secret", "") != POSTBACK_SECRET:
             return "Unauthorized", 401
 
-    # --- Input sanitiser ---
     def clean(key, default="", max_len=200):
         val = request.values.get(key, default)
         return str(val)[:max_len].strip()
 
-    network         = clean("network",  "Unknown")
-    campaign        = clean("campaign", "No Campaign")
-    offer_id        = clean("offer_id")
-    payout_raw      = clean("payout",   "0", 20)
-    status          = clean("status",   "Approved")
-    subid           = clean("subid",    "None")
-    country         = clean("country",  "Unknown", 10)
-    ip              = clean("ip",       "N/A",     45)
-    conversion_time = clean("time",     "N/A",     50)
+    network = clean("network", "Unknown")
+    campaign = clean("campaign", "No Campaign")
+    offer_id = clean("offer_id")
+    payout_raw = clean("payout", "0", 20)
+    status = clean("status", "Approved")
+    subid = clean("subid", "None")
+    country = clean("country", "Unknown", 10)
+    ip = clean("ip", "N/A", 45)
+    conversion_time = clean("time", "N/A", 50)
 
     try:
         payout = round(float(payout_raw), 4)
     except ValueError:
         payout = 0.0
 
-# --- Telegram alert (approved only) ---
-if status.lower() in ("approved", "1"):
+    # --- Telegram alert (approved only) ---
+    if status.lower() in ("approved", "1"):
 
-    message = f"""🚀 {network} New Lead Received
+        message = f"""🚀 {network} New Lead Received
 
 🌐 Network: {network}
 🎯 Campaign: {campaign}
@@ -484,21 +483,21 @@ if status.lower() in ("approved", "1"):
 ━━━━━━━━━━━━━━━
 💎 SK CPA Command Center"""
 
-    if payout >= 5:
-        message = "🔥 HIGH VALUE LEAD ALERT 🔥\n\n" + message
+        if payout >= 5:
+            message = "🔥 HIGH VALUE LEAD ALERT 🔥\n\n" + message
 
-    send_message(CHAT_ID, message)
+        send_message(CHAT_ID, message)
 
     # --- Save to Supabase ---
     sb_insert({
-        "network":         network,
-        "campaign":        campaign,
-        "offer_id":        offer_id,
-        "payout":          payout,
-        "status":          status,
-        "subid":           subid,
-        "country":         country,
-        "ip":              ip,
+        "network": network,
+        "campaign": campaign,
+        "offer_id": offer_id,
+        "payout": payout,
+        "status": status,
+        "subid": subid,
+        "country": country,
+        "ip": ip,
         "conversion_time": conversion_time,
     })
 
